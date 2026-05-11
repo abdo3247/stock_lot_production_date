@@ -1,12 +1,12 @@
 # Translation of stock_lot_production_date to French
-# Copyright (C) 2026 More ERP
+# Copyright (C) 2026 Abdallah
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-11 00:00+0000\n"
 "PO-Revision-Date: 2026-05-11 00:00+0000\n"
-"Last-Translator: More ERP <contact@more-erp.com>\n"
+"Last-Translator: Abdallah\n"
 "Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -18,10 +18,14 @@ msgstr ""
 msgid "Date de production"
 msgstr "Date de production"
 
-#. model:ir.model.fields,field_description:stock_lot_production_date.field_stock_move_line__lot_production_date
+#. model:ir.model.fields,help:stock_lot_production_date.field_stock_lot__production_date
+msgid "Date de fabrication du lot ou numéro de série. Sert de base de calcul aux dates d'expiration, de péremption (DLUO), d'enlèvement et d'alerte, en remplacement de la date de réception/création."
+msgstr "Date de fabrication du lot ou numéro de série. Sert de base de calcul aux dates d'expiration, de péremption (DLUO), d'enlèvement et d'alerte, en remplacement de la date de réception/création."
+
+#. view:stock.lot.search.production.date
 msgid "Date de production"
 msgstr "Date de production"
 
-#. model:ir.model.fields,help:stock_lot_production_date.field_stock_lot__production_date
-msgid "Date de fabrication du lot / numéro de série. Si le produit utilise les dates d'expiration, les dates sont recalculées automatiquement à partir de cette date."
-msgstr "Date de fabrication du lot / numéro de série. Si le produit utilise les dates d'expiration, les dates sont recalculées automatiquement à partir de cette date."
+#. view:stock.lot.search.production.date
+msgid "Par date de production"
+msgstr "Par date de production"

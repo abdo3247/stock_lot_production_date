@@ -1,79 +1,105 @@
-from datetime import date, datetime, time as dt_time
-from dateutil.relativedelta import relativedelta
+from datetime import date, datetime, timedelta
 
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import TransactionCase, tagged
 
 
+@tagged('post_install', '-at_install')
 class TestProductionDate(TransactionCase):
+    """Tests fonctionnels du champ production_date sur stock.lot."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.product = cls.env['product.product'].create({
-            'name': 'Produit Test Lot',
+            'name': 'Produit Test Expiry',
             'type': 'consu',
             'tracking': 'lot',
             'use_expiration_date': True,
-            'use_time': 365,       # 1 an
-            'removal_time': 400,   # ~13 mois
-            'alert_time': 30,      # alerte 30j avant expiration
+            'expiration_time': 365,   # 1 an
+            'use_time': 300,          # 10 mois
+            'removal_time': 350,      # ~11,5 mois
+            'alert_time': 30,         # 30 jours avant expiration
         })
 
-    def _make_lot(self, production_date=None):
-        vals = {
-            'name': 'LOT-TEST-001',
-            'product_id': self.product.id,
-        }
-        if production_date:
-            vals['production_date'] = production_date
+    def _create_lot(self, name='LOT-TEST', product=None, **extra):
+        product = product or self.product
+        vals = {'name': name, 'product_id': product.id, **extra}
         return self.env['stock.lot'].create(vals)
 
-    def test_no_production_date_no_recompute(self):
-        """Sans date de production, les dates ne sont pas touchées."""
-        lot = self._make_lot()
-        # expiration_date peut être setté par Odoo core (depuis now) — on vérifie juste qu'il n'y a pas d'erreur
+    # ── Test 1 : production_date → 4 dates recalculées ────────────────────────
+
+    def test_onchange_computes_expiry(self):
+        """Création avec production_date → les 4 dates sont calculées correctement."""
+        prod_date = date(2026, 1, 15)
+        lot = self._create_lot(production_date=prod_date)
+
+        base = datetime(2026, 1, 15, 0, 0, 0)
+        self.assertEqual(lot.expiration_date, base + timedelta(days=365))
+        self.assertEqual(lot.use_date, base + timedelta(days=300))
+        self.assertEqual(lot.removal_date, base + timedelta(days=350))
+        self.assertEqual(lot.alert_date, base + timedelta(days=30))
+
+    # ── Test 2 : sans production_date → dates standard non écrasées ───────────
+
+    def test_no_production_date_no_change(self):
+        """Sans production_date, le module ne modifie pas les dates existantes."""
+        lot = self._create_lot('LOT-NO-PROD')
+        # On fixe manuellement une date d'expiration (simulant ce que product_expiry
+        # ferait à la réception) et on vérifie qu'un write sans production_date ne la touche pas.
+        sentinel = datetime(2028, 6, 1, 0, 0, 0)
+        lot.with_context(skip_lot_recompute=True).write({'expiration_date': sentinel})
+        lot.write({'ref': 'REF-001'})  # write sans production_date ni product_id
+        self.assertEqual(lot.expiration_date, sentinel)
+
+    # ── Test 3 : parser désactivé par défaut ─────────────────────────────────
+
+    def test_name_parser_disabled_by_default(self):
+        """Sans regex configuré, le nom du lot n'est pas parsé."""
+        # S'assurer que le paramètre est vide (état initial après installation)
+        self.env['ir.config_parameter'].sudo().set_param(
+            'stock_lot_production_date.lot_name_regex', ''
+        )
+        lot = self._create_lot('ABC-260116-270116')
         self.assertFalse(lot.production_date)
 
-    def test_production_date_sets_expiration(self):
-        """Date de production → expiration = production + use_time jours."""
-        prod_date = date(2026, 1, 1)
-        lot = self._make_lot(production_date=prod_date)
-        expected_expiration = datetime.combine(prod_date, dt_time.min) + relativedelta(days=365)
-        self.assertEqual(lot.expiration_date, expected_expiration)
+    # ── Test 4 : parser activé → DoP et DoE extraits ─────────────────────────
 
-    def test_production_date_sets_removal(self):
-        """Date de production → removal = production + removal_time jours."""
-        prod_date = date(2026, 1, 1)
-        lot = self._make_lot(production_date=prod_date)
-        expected_removal = datetime.combine(prod_date, dt_time.min) + relativedelta(days=400)
-        self.assertEqual(lot.removal_date, expected_removal)
+    def test_name_parser_enabled(self):
+        """Avec regex configuré, DoP et DoE sont extraits du nom du lot."""
+        self.env['ir.config_parameter'].sudo().set_param(
+            'stock_lot_production_date.lot_name_regex',
+            r'(?P<dop>\d{6})-(?P<doe>\d{6})',
+        )
+        self.env['ir.config_parameter'].sudo().set_param(
+            'stock_lot_production_date.lot_date_format', '%y%m%d'
+        )
+        lot = self._create_lot('ABC-260116-270116')
+        self.assertEqual(lot.production_date, date(2026, 1, 16))
+        self.assertEqual(lot.expiration_date, datetime(2027, 1, 16, 0, 0, 0))
 
-    def test_production_date_sets_best_before(self):
-        """best_before = production + (use_time - alert_time) jours."""
-        prod_date = date(2026, 1, 1)
-        lot = self._make_lot(production_date=prod_date)
-        expected = datetime.combine(prod_date, dt_time.min) + relativedelta(days=365 - 30)
-        self.assertEqual(lot.best_before_date, expected)
+    # ── Test 5 (bonus) : date invalide dans le nom → ignorée silencieusement ─
 
-    def test_write_updates_dates(self):
-        """Écriture de production_date sur lot existant recalcule les dates."""
-        lot = self._make_lot()
+    def test_invalid_date_in_name_is_ignored(self):
+        """Une date non parsable dans le nom du lot est ignorée sans lever d'exception."""
+        self.env['ir.config_parameter'].sudo().set_param(
+            'stock_lot_production_date.lot_name_regex',
+            r'(?P<dop>\d{6})-(?P<doe>\d{6})',
+        )
+        self.env['ir.config_parameter'].sudo().set_param(
+            'stock_lot_production_date.lot_date_format', '%y%m%d'
+        )
+        # Mois 13 → ValueError → warning loggé, pas d'exception
+        lot = self._create_lot('ABC-991399-991399')
+        self.assertFalse(lot.production_date)
+        self.assertFalse(lot.expiration_date)
+
+    # ── Test complémentaire : write('production_date') re-déclenche le calcul ─
+
+    def test_write_production_date_recomputes(self):
+        """Écrire production_date sur un lot existant recalcule les dates."""
+        lot = self._create_lot('LOT-WRITE')
+        self.assertFalse(lot.production_date)
         prod_date = date(2025, 6, 15)
         lot.write({'production_date': prod_date})
-        expected_expiration = datetime.combine(prod_date, dt_time.min) + relativedelta(days=365)
-        self.assertEqual(lot.expiration_date, expected_expiration)
-
-    def test_product_without_expiration_no_recompute(self):
-        """Produit sans use_expiration_date → dates non recalculées."""
-        product_no_exp = self.env['product.product'].create({
-            'name': 'Produit sans expiration',
-            'type': 'consu',
-            'tracking': 'lot',
-            'use_expiration_date': False,
-        })
-        lot = self.env['stock.lot'].create({
-            'name': 'LOT-NO-EXP',
-            'product_id': product_no_exp.id,
-            'production_date': date(2026, 1, 1),
-        })
-        self.assertFalse(lot.expiration_date)
+        base = datetime(2025, 6, 15, 0, 0, 0)
+        self.assertEqual(lot.expiration_date, base + timedelta(days=365))

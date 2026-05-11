@@ -1,30 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Formulaire du lot : ajout date de production dans le groupe des dates -->
-    <record id="view_production_date_stock_lot_form" model="ir.ui.view">
+    <!--
+        Formulaire : hérite de la vue product_expiry qui ajoute déjà les 4 dates
+        (expiration_date, use_date, removal_date, alert_date).
+        On insère production_date juste avant expiration_date.
+    -->
+    <record id="view_lot_production_date_form" model="ir.ui.view">
         <field name="name">stock.lot.form.production.date</field>
         <field name="model">stock.lot</field>
-        <field name="inherit_id" ref="stock.view_lot_form"/>
+        <field name="inherit_id" ref="product_expiry.view_production_lot_form"/>
         <field name="arch" type="xml">
-            <!--
-                Dans Odoo 19, le groupe des dates d'expiration contient expiration_date.
-                On insère production_date avant expiration_date.
-            -->
             <xpath expr="//field[@name='expiration_date']" position="before">
                 <field name="production_date" widget="date"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Vue liste des lots : colonne date de production -->
-    <record id="view_production_date_stock_lot_tree" model="ir.ui.view">
+    <!-- Liste : colonne production_date optionnelle avant expiration_date -->
+    <record id="view_lot_production_date_tree" model="ir.ui.view">
         <field name="name">stock.lot.tree.production.date</field>
         <field name="model">stock.lot</field>
         <field name="inherit_id" ref="stock.view_lot_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='expiration_date']" position="before">
                 <field name="production_date" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Recherche : filtre par date + group_by -->
+    <record id="view_lot_production_date_search" model="ir.ui.view">
+        <field name="name">stock.lot.search.production.date</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_lot_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter
+                    string="Date de production"
+                    name="filter_production_date"
+                    date="production_date"/>
+                <filter
+                    string="Par date de production"
+                    name="groupby_production_date"
+                    context="{'group_by': 'production_date'}"
+                    groups="stock.group_stock_manager"/>
             </xpath>
         </field>
     </record>
