@@ -2,14 +2,15 @@
 <odoo>
 
     <!--
-        Formulaire : hérite de la vue product_expiry qui ajoute déjà les 4 dates
-        (expiration_date, use_date, removal_date, alert_date).
-        On insère production_date juste avant expiration_date.
+        Formulaire : hérite de stock.view_lot_form avec priority=20 pour s'appliquer
+        APRÈS product_expiry (priority=16), qui ajoute expiration_date.
+        En Odoo 19, product_expiry n'expose pas de vue nommée héritée séparée.
     -->
     <record id="view_lot_production_date_form" model="ir.ui.view">
         <field name="name">stock.lot.form.production.date</field>
         <field name="model">stock.lot</field>
-        <field name="inherit_id" ref="product_expiry.view_production_lot_form"/>
+        <field name="inherit_id" ref="stock.view_lot_form"/>
+        <field name="priority">20</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='expiration_date']" position="before">
                 <field name="production_date" widget="date"/>
