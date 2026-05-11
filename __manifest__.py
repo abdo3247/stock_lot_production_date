@@ -1,6 +1,6 @@
 {
     'name': 'Stock Lot — Date de production',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'category': 'Inventory/Inventory',
     'summary': (
         "Date de production sur stock.lot, utilisée comme base "
