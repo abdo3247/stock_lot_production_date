@@ -2,14 +2,14 @@
 <odoo>
 
     <!--
-        Formulaire : hérite de stock.view_lot_form avec priority=20 pour s'appliquer
-        APRÈS product_expiry (priority=16), qui ajoute expiration_date.
-        En Odoo 19, product_expiry n'expose pas de vue nommée héritée séparée.
+        Formulaire : hérite de stock.view_production_lot_form (priority=10).
+        product_expiry.view_move_form_expiry ajoute expiration_date à priority=16.
+        Notre vue s'applique à priority=20 pour trouver expiration_date dans l'arch.
     -->
     <record id="view_lot_production_date_form" model="ir.ui.view">
         <field name="name">stock.lot.form.production.date</field>
         <field name="model">stock.lot</field>
-        <field name="inherit_id" ref="stock.view_lot_form"/>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
         <field name="priority">20</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='expiration_date']" position="before">
@@ -22,7 +22,7 @@
     <record id="view_lot_production_date_tree" model="ir.ui.view">
         <field name="name">stock.lot.tree.production.date</field>
         <field name="model">stock.lot</field>
-        <field name="inherit_id" ref="stock.view_lot_tree"/>
+        <field name="inherit_id" ref="stock.view_production_lot_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='expiration_date']" position="before">
                 <field name="production_date" optional="show"/>
@@ -34,7 +34,7 @@
     <record id="view_lot_production_date_search" model="ir.ui.view">
         <field name="name">stock.lot.search.production.date</field>
         <field name="model">stock.lot</field>
-        <field name="inherit_id" ref="stock.view_lot_search"/>
+        <field name="inherit_id" ref="stock.search_product_lot_filter"/>
         <field name="arch" type="xml">
             <xpath expr="//search" position="inside">
                 <filter
@@ -44,8 +44,7 @@
                 <filter
                     string="Par date de production"
                     name="groupby_production_date"
-                    context="{'group_by': 'production_date'}"
-                    groups="stock.group_stock_manager"/>
+                    context="{'group_by': 'production_date'}"/>
             </xpath>
         </field>
     </record>
