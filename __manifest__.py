@@ -1,12 +1,13 @@
 {
     'name': 'Stock Lot — Date de production',
-    'version': '19.0.1.3.0',
+    'version': '19.0.1.4.0',
     'category': 'Inventory/Inventory',
     'summary': (
         "Date de production sur stock.lot, utilisée comme base "
         "de calcul des dates d'expiration/alerte/enlèvement/péremption."
     ),
-    'author': 'Abdallah',
+    'author': 'More ERP',
+    'website': 'https://more-erp.com',
     'license': 'LGPL-3',
     'depends': ['stock', 'product_expiry'],
     'data': [
