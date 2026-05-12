@@ -30,6 +30,23 @@
         </field>
     </record>
 
+    <!--
+        Kanban : hérite de stock.view_production_lot_kanban (priority=10).
+        product_expiry.view_production_lot_view_kanban ajoute expiration_date à priority=16.
+        Notre vue s'applique à priority=20.
+    -->
+    <record id="view_lot_production_date_kanban" model="ir.ui.view">
+        <field name="name">stock.lot.kanban.production.date</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_kanban"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='expiration_date']" position="before">
+                <field name="production_date"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Recherche : filtre par date + group_by -->
     <record id="view_lot_production_date_search" model="ir.ui.view">
         <field name="name">stock.lot.search.production.date</field>

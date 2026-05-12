@@ -1,6 +1,6 @@
 {
     'name': 'Stock Lot — Date de production',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Inventory/Inventory',
     'summary': (
         "Date de production sur stock.lot, utilisée comme base "
@@ -12,6 +12,8 @@
     'data': [
         'data/ir_config_parameter.xml',
         'views/stock_lot_views.xml',
+        'views/stock_move_line_views.xml',
+        'views/stock_quant_views.xml',
     ],
     'installable': True,
     'application': False,

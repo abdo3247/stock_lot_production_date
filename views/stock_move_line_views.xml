@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Liste des opérations dans les transferts (onglet "Opérations").
+        Base : stock.view_stock_move_line_operation_tree (priority <= 16)
+        product_expiry y ajoute expiration_date à priority=16.
+        Notre vue à priority=20.
+    -->
+    <record id="view_move_line_op_production_date" model="ir.ui.view">
+        <field name="name">stock.move.line.operations.list.production.date</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='expiration_date']" position="before">
+                <field name="lot_production_date"
+                       string="Date prod."
+                       optional="show"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+        Liste des opérations détaillées (onglet "Opérations détaillées").
+        Base : stock.view_stock_move_line_detailed_operation_tree
+    -->
+    <record id="view_move_line_detailed_op_production_date" model="ir.ui.view">
+        <field name="name">stock.move.line.detailed.operations.list.production.date</field>
+        <field name="model">stock.move.line</field>
+        <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='expiration_date']" position="before">
+                <field name="lot_production_date"
+                       string="Date prod."
+                       optional="show"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+        Formulaire opérations de mouvement (stock.move, lignes move.line).
+        Base : stock.view_stock_move_operations
+    -->
+    <record id="view_stock_move_operations_production_date" model="ir.ui.view">
+        <field name="name">stock.move.operations.form.production.date</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_stock_move_operations"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='expiration_date']" position="before">
+                <field name="lot_production_date"
+                       string="Date prod."
+                       optional="show"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
